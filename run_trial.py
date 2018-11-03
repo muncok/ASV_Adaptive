@@ -167,7 +167,7 @@ if __name__=='__main__':
             'n_use_enroll': args.n_enr,
             'include_init': args.incl_init,
             'cfid_coef': 0.0005,  #alpha
-            'mean_coef': 0.001,    #beta
+            'mean_coef': 0.01,    #beta
             'c_multiplier': 1,
             'm_multiplier': 1,
             'ord': 2,
