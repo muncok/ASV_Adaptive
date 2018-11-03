@@ -202,8 +202,7 @@ if __name__=='__main__':
     trials_id_sets = []
     trials_label_sets = []
 
-    #for p_ratio in [0.01, 0.1, 0.5, 0.9]:
-    for p_ratio in [0.9]:
+    for p_ratio in [0.01, 0.1, 0.5, 0.9]:
         print("="*100)
         print("p_ratio: {}".format(p_ratio))
         trial_set = pickle.load(open("enr306_uttr1/trials_ratio_{}.pkl".format(str(p_ratio)), "rb"))
