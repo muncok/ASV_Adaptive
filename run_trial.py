@@ -91,20 +91,20 @@ def evaluation_base(enr_spk, enr_id, trials_id, label, config):
 
     return [acc, eer, fpr, fnr, pos_scores.tolist(), neg_scores.tolist(), correct, wrong]
 
-def eval_wrapper(enr_spk, enr_id, trials_id, label, config):
+def eval_wrapper(enr_spk, enr_id, trials_id, label, config, res_lst):
     n_trials = len(trials_id)
     if config['mod'] == 'base':
         base_stat = evaluation_base(enr_spk, enr_id, trials_id, label, config)
         b_acc, b_eer, b_fpr, b_fnr, pos_scores, neg_scores, correct, wrong = base_stat
-        #result = (enr_spk, enr_id[0], n_trials, b_acc, b_eer, b_fpr, b_fnr, n_trials)
+        result = (enr_spk, enr_id[0], n_trials, b_acc, b_eer, b_fpr, b_fnr, n_trials)
     elif config['mod'] == 'inc':
         inc_stat = evaluation_inc(enr_spk, enr_id, trials_id, label, config)
         i_acc, i_eer, i_fpr, i_fnr, i_enrolls, i_enr_acc, pos_scores, neg_scores, correct, wrong = inc_stat
-        #result = (enr_spk, enr_id[0], i_acc, i_eer, i_fpr, i_fnr, i_enrolls, i_enr_acc, n_trials)
+        result = (enr_spk, enr_id[0], i_acc, i_eer, i_fpr, i_fnr, i_enrolls, i_enr_acc, n_trials)
     else:
         raise NotImplemented
 
-    #res_lst.put(result)
+    res_lst.put(result)
     posScore_lst.put(pos_scores)
     negScore_lst.put(neg_scores)
     correct_lst.put(correct)
@@ -167,7 +167,7 @@ if __name__=='__main__':
             'n_use_enroll': args.n_enr,
             'include_init': args.incl_init,
             'cfid_coef': 0.0005,  #alpha
-            'mean_coef': 0.01,    #beta
+            'mean_coef': 0.001,    #beta
             'c_multiplier': 1,
             'm_multiplier': 1,
             'ord': 2,
