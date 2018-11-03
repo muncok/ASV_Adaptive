@@ -256,7 +256,7 @@ if __name__=='__main__':
                 total_wrong += wrong_lst.get()
                 p.join()
 
-        #pickle.dump(results, open("{}/result.pkl".format(output_dir), "wb"))
+        pickle.dump(results, open("{}/result.pkl".format(output_dir), "wb"))
         pickle.dump(posScores, open("{}/posScores.pkl".format(output_dir), "wb"))
         pickle.dump(negScores, open("{}/negScores.pkl".format(output_dir), "wb"))
         pickle.dump([total_correct, total_wrong], open("{}/answers.pkl".format(output_dir), "wb"))
