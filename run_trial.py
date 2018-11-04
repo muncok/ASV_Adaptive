@@ -166,8 +166,8 @@ if __name__=='__main__':
             # n_use_enroll: 'full' or 'N' (decimal in string type such as '5')
             'n_use_enroll': args.n_enr,
             'include_init': args.incl_init,
-            'cfid_coef': 0.0005,  #alpha
-            'mean_coef': 0.01,    #beta
+            'cfid_coef': 1.2,  #alpha 0.0005
+            'mean_coef': 1,    #beta 0.01
             'c_multiplier': 1,
             'm_multiplier': 1,
             'ord': 2,
@@ -256,7 +256,7 @@ if __name__=='__main__':
                 total_wrong += wrong_lst.get()
                 p.join()
 
-        pickle.dump(results, open("{}/result.pkl".format(output_dir), "wb"))
+        #pickle.dump(results, open("{}/result.pkl".format(output_dir), "wb"))
         pickle.dump(posScores, open("{}/posScores.pkl".format(output_dir), "wb"))
         pickle.dump(negScores, open("{}/negScores.pkl".format(output_dir), "wb"))
         pickle.dump([total_correct, total_wrong], open("{}/answers.pkl".format(output_dir), "wb"))

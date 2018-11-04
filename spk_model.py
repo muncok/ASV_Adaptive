@@ -23,6 +23,7 @@ class spk_model():
 
         self.embed_mean = self._compute_embed_mean()
         self.config = config
+        self.cfids = []
 
 
     def _compute_embed_mean(self):
@@ -34,11 +35,12 @@ class spk_model():
         self.utters.append(in_utter)
         self.confidences.append(cfid)
         self.n_total_enroll += 1
+        self.cfids.append(cfid)
 
         prev_mean = self.embed_mean
         self.embed_mean = self._compute_embed_mean()
         mean_cos = cos_dist_sim(prev_mean, self.embed_mean, dim=0)
-        change = (1-mean_cos) - 1e-4
+        #change = (1-1e-4) - mean_cos
 
 
         c_mult = self.config['c_multiplier']
@@ -46,8 +48,17 @@ class spk_model():
         al = self.config['cfid_coef']
         be = self.config['mean_coef']
         if self.config['accept_thres_update']:
-            #self.accept_thres = (self.accept_thres*(1 - al) + al * cfid) * (1 + be * change)
-            self.accept_thres = self.accept_thres * (1 + al*cfid + be*change)
+            # multiplier
+            #self.accept_thres = (self.accept_thres*(1 - al) + al * cfid) * (1 + be * change) # up and down
+            #self.accept_thres = self.accept_thres * (1 + al*cfid + be*change) # keep increasing
+            #print(al*cfid + be*change)
+
+            # moving average
+            T_new = al*cfid*self.accept_thres/self.enroll_thres
+            lamb = be*(1-mean_cos)
+            self.accept_thres = self.accept_thres*(1-lamb) + T_new*lamb
+
+
         if self.config['enroll_thres_update']:
             self.enroll_thres = (self.enroll_thres*(1 - al) + (al * c_mult) * cfid ) * (1 + (be * m_mult) * change)
 
