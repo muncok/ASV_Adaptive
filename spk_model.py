@@ -2,21 +2,21 @@ import numpy as np
 from utils import cos_dist_sim
 
 class spk_model():
-    def __init__(self, name, keys, enroll_utters, config):
+    def __init__(self, config, name, enr_keys, enroll_utters):
         self.name = name
         self.accept_thres = config['accept_thres']
         self.enroll_thres = config['enroll_thres']
         self.sim = config['sim']
-        self.mod = config['mod']
+        self.sv_mode = config['sv_mode']
         self.accept_thres_update = config['accept_thres_update']
         self.enroll_thres_update = config['enroll_thres_update']
         self.n_use_enroll = config['n_use_enroll']
         self.include_init = config['include_init']
 
-        self.n_init_enrolls = len(keys)
-        self.n_total_enroll = 0
+        self.n_init_enrolls = len(enroll_utters)
+        self.n_total_enroll = self.n_init_enrolls
 
-        self.embed_key = list(keys)
+        self.embed_key = enr_keys
         self.utters = list(enroll_utters)
         self.confidences = [1.0]*self.n_init_enrolls
         self.confidences_scale = [1.0]*self.n_init_enrolls
@@ -28,6 +28,7 @@ class spk_model():
 
     def _compute_embed_mean(self):
         mean_ = np.mean(self.utters, axis=0)
+
         return mean_
 
     def enroll(self, key, in_utter, cfid):
@@ -40,13 +41,10 @@ class spk_model():
         prev_mean = self.embed_mean
         self.embed_mean = self._compute_embed_mean()
         mean_cos = cos_dist_sim(prev_mean, self.embed_mean, dim=0)
-        #change = (1-1e-4) - mean_cos
 
 
-        c_mult = self.config['c_multiplier']
-        m_mult = self.config['m_multiplier']
-        al = self.config['cfid_coef']
-        be = self.config['mean_coef']
+        al = self.config['alpha']
+        be = self.config['beta']
         if self.config['accept_thres_update']:
             # multiplier
             #self.accept_thres = (self.accept_thres*(1 - al) + al * cfid) * (1 + be * change) # up and down
@@ -60,7 +58,8 @@ class spk_model():
 
 
         if self.config['enroll_thres_update']:
-            self.enroll_thres = (self.enroll_thres*(1 - al) + (al * c_mult) * cfid ) * (1 + (be * m_mult) * change)
+            change = (1-1e-4) - mean_cos
+            self.enroll_thres = (self.enroll_thres*(1 - al) + al * cfid ) * (1 + be * change)
 
         # this value should be not used (it is not allowed supervison)
         if key[:7] == self.name:
@@ -70,14 +69,14 @@ class spk_model():
 
     def confidence(self, in_utter):
         if self.sim == 'cosMean':
-            if self.mod == 'base':
+            if self.sv_mode == 'base':
                 cfid = cos_dist_sim(self.embed_mean, in_utter, dim=0)
             else:
                 ### cosine score ###
                 cfid = cos_dist_sim(self.embed_mean, in_utter)
         elif self.sim == 'meanCos':
             in_utter_ = np.array(in_utter).reshape(1,-1)
-            if self.mod == 'base':
+            if self.sv_mode == 'base':
                 utters_ = np.array(self.utters)
             else:
                 n_total = len(self.utters)

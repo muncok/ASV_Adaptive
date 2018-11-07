@@ -3,7 +3,7 @@ import numpy as np
 class sv_system():
     def __init__(self, spk_models, config):
         self.spk_models = spk_models
-        self.mod = config['mod']
+        self.sv_mode = config['sv_mode']
 
         self.log_trial_keys = []
         self.log_trial_cfid = []
@@ -28,7 +28,7 @@ class sv_system():
 
         if max_cfid > accept_thres:
             accept = 1
-        if (max_cfid > enroll_thres) and (self.mod != 'base'):
+        if (max_cfid > enroll_thres) and (self.sv_mode != 'base'):
             enroll = spk_model.enroll(key, in_utter, max_cfid)
 
         return accept, enroll, max_cfid
