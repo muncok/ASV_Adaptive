@@ -6,14 +6,17 @@
     * Pandas, tqdm ... (you can install them by pip or conda)
 
 * Data
+
+    untar them in repository directory.
+    
     * [Trial](https://drive.google.com/open?id=1dD7n4Vn56cdrb6A21C1sf-mDjPE0gDpm&authuser=muncok@dal.snu.ac.kr)
     * [embeddings](https://drive.google.com/open?id=1QIkKdmTi4sICGokWlwAy25cTGB2OEAT7&authuser=muncok@dal.snu.ac.kr)
 
-    untar them in repository directory.
+   
 
 * Run example
 
->`python run_trial.py -out_dir out_tmp -sv_mode base -trial_t random`
+    `python run_trial.py -out_dir out_tmp -sv_mode base -trial_t random`
 
 * Arguments
 
