@@ -12,8 +12,7 @@ from evaluation import eval_wrapper
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument('-n_enr',
-                    type=str,
+parser.add_argument('-n_enr', type=str,
                     help='number of enrollments',
                     default='full')
 
@@ -131,12 +130,14 @@ if __name__=='__main__':
                 enr_id = np.array([key2id[k] for k in enr_uttr_keys])
                 if config['trial_type'] == 'random':
                     permu_idx = np.random.permutation(range(n_trials))
-                    trials_id = np.array([key2id[k] for k in pos_trial_keys + neg_trial_keys])[permu_idx]
+                    trials_id = np.array([key2id[k]
+                        for k in pos_trial_keys + neg_trial_keys])[permu_idx]
                     label = np.array([1]*len(pos_trial_keys) + [0]*len(neg_trial_keys))
                     label = label[permu_idx]
                 elif config['trial_type'] == 'sortedPos':
                     sessions = list(map(lambda x: x[8:19], pos_trial_keys))
-                    df = pd.DataFrame.from_dict(dict( utters = pos_trial_keys, session = sessions ))
+                    df = pd.DataFrame.from_dict(dict( utters = pos_trial_keys,
+                        session = sessions ))
                     unique_session = np.unique(sorted(df.session.values))
                     session_cnt = df.session.value_counts()
 
@@ -144,7 +145,8 @@ if __name__=='__main__':
                     n_unique_sess = len(unique_session)
                     n_sess_trials = len(neg_trial_keys)+n_unique_sess
 
-                    pos_sess_idx_ = sorted(np.random.choice(range(n_sess_trials), size=n_unique_sess, replace=False))
+                    pos_sess_idx_ = sorted(np.random.choice(range(n_sess_trials),
+                        size=n_unique_sess, replace=False))
 
                     pos_seat_idx_ = []
                     for i, sess in enumerate(unique_session):
@@ -167,7 +169,8 @@ if __name__=='__main__':
                     label[neg_seat_idx_] = [0]*len(neg_trial_keys)
 
                 proc = Process(target=eval_wrapper,
-                        args=(config, embeds, keys, enr_spks, enr_id, trials_id, label,
+                        args=(config, embeds, keys,
+                            enr_spks, enr_id, trials_id, label,
                             metaR_q, pScore_q, nScore_q))
                 procs.append(proc)
                 proc.start()
