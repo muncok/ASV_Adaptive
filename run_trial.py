@@ -85,13 +85,13 @@ if __name__=='__main__':
             }
     print(config)
 
-    keys = np.array(pickle.load(open("../xvector_embeds/sv_keys.pkl", "rb")))
-    embeds = np.load("../xvector_embeds/sv_embeds.npy")
+    keys = np.array(pickle.load(open("xvector_embeds/sv_keys.pkl", "rb")))
+    embeds = np.load("xvector_embeds/sv_embeds.npy")
     key_df = key2df(keys)
     key2id = {k:v for v, k in enumerate(keys)}
 
     # trial for finding best threshold
-    trial_base = "../trials/enr306_uttr1/"
+    trial_base = "trials/enr306_uttr1/"
     set_threshold(config, embeds, trial_base+'trial_for_thresh.pkl')
     print('Accept Thres: {:.5f}, Enroll Thres: {:.5f}'.format(
         config['accept_thres'], config['enroll_thres']))
