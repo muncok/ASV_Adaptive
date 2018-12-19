@@ -57,12 +57,6 @@ parser.add_argument('-incl_init',
                     help='include the init enrollment',
                     action='store_true')
 
-
-
-### Return: Accuracy, Enroll_accuracy, FPR, FNR, Scores
-
-
-
 if __name__=='__main__':
 
     args = parser.parse_args()
@@ -79,19 +73,19 @@ if __name__=='__main__':
             'include_init': args.incl_init,
             'alpha': 0.0005,  #alpha 0.0005
             'beta': 0.01,  #beta 0.01
-            # normal, extreme
+            # normal or extreme threshold values
             'thresh_type': args.ths_t,
             'sv_mode': args.sv_mode
             }
     print(config)
 
-    keys = np.array(pickle.load(open("../xvector_embeds/sv_keys.pkl", "rb")))
-    embeds = np.load("../xvector_embeds/sv_embeds.npy")
+    keys = np.array(pickle.load(open("xvector_embeds/sv_keys.pkl", "rb")))
+    embeds = np.load("xvector_embeds/sv_embeds.npy")
     key_df = key2df(keys)
     key2id = {k:v for v, k in enumerate(keys)}
 
     # trial for finding best threshold
-    trial_base = "../trials/enr306_uttr1/"
+    trial_base = "trials/enr306_uttr1/"
     set_threshold(config, embeds, trial_base+'trial_for_thresh.pkl')
     print('Accept Thres: {:.5f}, Enroll Thres: {:.5f}'.format(
         config['accept_thres'], config['enroll_thres']))
