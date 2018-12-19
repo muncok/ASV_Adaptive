@@ -34,32 +34,27 @@ parser.add_argument('-sv_mode',
                     required=True
                     )
 
-parser.add_argument('-trial_t',
+parser.add_argument('-t_trial',
                     type=str,
                     help='type of trial',
                     choices=['random', 'sortedPos'],
                     required=True
                     )
 
-parser.add_argument('-ths_t',
+parser.add_argument('-t_ths',
                     type=str,
                     help='type of threshold',
                     choices=['normal', 'extreme'],
                     default='normal'
                     )
 
-parser.add_argument('-update',
+parser.add_argument('-ths_update',
                     help='use of thresh update',
                     action='store_true')
 
 parser.add_argument('-incl_init',
                     help='include the init enrollment',
                     action='store_true')
-
-
-
-### Return: Accuracy, Enroll_accuracy, FPR, FNR, Scores
-
 
 
 if __name__=='__main__':
@@ -69,21 +64,22 @@ if __name__=='__main__':
     config = {
             # sim: cosMean, meanCos, euc
             'sim': 'meanCos',
-            'accept_thres_update': args.update,
+            'accept_thres_update': args.ths_update,
             'enroll_thres_update': False,
             # trial_tpye: sortedPos, random, posNeg
-            'trial_type': args.trial_t,
+            'trial_type': args.t_trial,
             # n_use_enroll: 'full' or 'N' (decimal in string type such as '5')
             'n_use_enroll': args.n_enr,
             'include_init': args.incl_init,
             'alpha': 0.0005,  #alpha 0.0005
             'beta': 0.01,  #beta 0.01
             # normal, extreme
-            'thresh_type': args.ths_t,
+            'thresh_type': args.t_ths,
             'sv_mode': args.sv_mode
             }
     print(config)
 
+    # embed_id
     keys = np.array(pickle.load(open("xvector_embeds/sv_keys.pkl", "rb")))
     embeds = np.load("xvector_embeds/sv_embeds.npy")
     key_df = key2df(keys)
@@ -103,8 +99,8 @@ if __name__=='__main__':
         print("p_ratio: {}".format(p_ratio))
         trial_set = pickle.load(open(trial_base+"trials_ratio_{}.pkl".format(str(p_ratio)), "rb"))
         # ===== Output Dir =====
-        output_dir = "{}/n_enr_{}_pRatio_{}".format(
-                args.out_dir, config['n_use_enroll'], p_ratio)
+        output_dir = "{}/{}/n_enr_{}_pRatio_{}".format(
+                args.out_dir, args.sv_mode, config['n_use_enroll'], p_ratio)
         if config["include_init"]:
             output_dir += "_initEnr"
         if config["accept_thres_update"]:
@@ -113,24 +109,22 @@ if __name__=='__main__':
             os.makedirs(output_dir)
         pickle.dump(config, open(output_dir+'/config.pkl', "wb"))
 
-        metaR_l = []
-        pScore_l = []
-        nScore_l = []
-        for i, idx in enumerate(range(0,len(trial_set), n_parallel)):
+        metaInfo_l = []
+        trace_l = []
+        for i, idx in enumerate(range(0, len(trial_set), n_parallel)):
             procs = []
             manager = Manager()
-            metaR_q = manager.Queue()
-            pScore_q = manager.Queue()
-            nScore_q = manager.Queue()
+            metaInfo_q = manager.Queue()
+            trace_q = manager.Queue()
 
             print('Starting jobs [{}/{}]'.format(i, len(trial_set)//n_parallel))
             for j, trial in enumerate(trial_set[idx:idx+n_parallel]):
                 enr_spks, enr_uttr_keys, pos_trial_keys, neg_trial_keys = trial
                 n_trials = len(pos_trial_keys) + len(neg_trial_keys)
-                enr_id = np.array([key2id[k] for k in enr_uttr_keys])
+                enr_ids = np.array([key2id[k] for k in enr_uttr_keys])
                 if config['trial_type'] == 'random':
                     permu_idx = np.random.permutation(range(n_trials))
-                    trials_id = np.array([key2id[k]
+                    trial_ids = np.array([key2id[k]
                         for k in pos_trial_keys + neg_trial_keys])[permu_idx]
                     label = np.array([1]*len(pos_trial_keys) + [0]*len(neg_trial_keys))
                     label = label[permu_idx]
@@ -159,10 +153,10 @@ if __name__=='__main__':
 
                     pos_trial_id = [key2id[k] for k in sorted(pos_trial_keys)]
                     neg_trial_id = [key2id[k] for k in neg_trial_keys]
-                    trials_id = np.zeros(n_trials)
-                    trials_id[pos_seat_idx_] = pos_trial_id
-                    trials_id[neg_seat_idx_] = neg_trial_id
-                    trials_id = trials_id.astype(np.int64)
+                    trial_ids = np.zeros(n_trials)
+                    trial_ids[pos_seat_idx_] = pos_trial_id
+                    trial_ids[neg_seat_idx_] = neg_trial_id
+                    trial_ids = trial_ids.astype(np.int64)
 
                     label = np.zeros(n_trials)
                     label[pos_seat_idx_] = [1]*len(pos_trial_keys)
@@ -170,20 +164,19 @@ if __name__=='__main__':
 
                 proc = Process(target=eval_wrapper,
                         args=(config, embeds, keys,
-                            enr_spks, enr_id, trials_id, label,
-                            metaR_q, pScore_q, nScore_q))
+                            enr_spks, enr_ids, trial_ids, label,
+                            metaInfo_q, trace_q))
                 procs.append(proc)
                 proc.start()
 
             print('Joining jobs [{}/{}]'.format(i, len(trial_set)//n_parallel))
             for p in tqdm(procs):
-                metaR_l.append(metaR_q.get())
-                pScore_l += pScore_q.get()
-                nScore_l += nScore_q.get()
+                metaInfo_l.append(metaInfo_q.get())
+                trace_l.append(trace_q.get())
                 p.join()
 
-        pickle.dump(metaR_l, open("{}/result.pkl".format(output_dir), "wb"))
-        pickle.dump(pScore_l, open("{}/posScores.pkl".format(output_dir), "wb"))
-        pickle.dump(nScore_l, open("{}/negScores.pkl".format(output_dir), "wb"))
+        meta_df = pd.DataFrame(metaInfo_l, columns=['enr_spk', 'enr_ids', 'n_trials'])
+        meta_df.to_pickle("{}/result.pkl".format(output_dir))
+        pickle.dump(trace_l, open("{}/trace.pkl".format(output_dir), "wb"))
 
     print('Done')

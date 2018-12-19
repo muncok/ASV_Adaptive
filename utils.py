@@ -3,13 +3,12 @@ import pandas as pd
 import torch
 from torch.nn.functional import cosine_similarity
 from sklearn.metrics import roc_curve
-from plot_ROC import plot_ROC
 
 def euc_dist(a, b, dim):
 
     return np.linalg.norm(a-b, axis=dim)
 
-def euc_dist_sim(a, b, dim=0):
+def euc_dist_sim(a, b, dim):
 
     return 1/(1+euc_dist(a, b, dim))
 
@@ -27,7 +26,7 @@ def cos_dist_batch(a, b):
 
     return (a * b).sum(1)
 
-def cos_dist_sim_torch(a, b, dim=0):
+def cos_dist_sim_torch(a, b, dim):
     a = torch.from_numpy(a).float()
     b = torch.from_numpy(b).float()
 
@@ -52,6 +51,15 @@ def compute_eer(pos_scores, neg_scores):
 
     return eer, thres
 
+def find_best_threshold(y_train_true, y_train_prob):
+    fpr_train, tpr_train, thresholds_train = roc_curve(y_train_true,
+            y_train_prob, pos_label =True)
+    sum_sensitivity_specificity_train = tpr_train + (1-fpr_train)
+    best_threshold_id_train = np.argmax(sum_sensitivity_specificity_train)
+    best_threshold = thresholds_train[best_threshold_id_train]
+
+    return best_threshold, fpr_train, thresholds_train
+
 def set_threshold(config, embeds, val_trial_pth):
     trial_for_thresh = pd.read_pickle(val_trial_pth)
     if ('Cos' in config['sim']) or ('cos' in config['sim']):
@@ -62,7 +70,8 @@ def set_threshold(config, embeds, val_trial_pth):
                 embeds[trial_for_thresh.test_id], dim=1)
 
     train_label_vector = trial_for_thresh.label.tolist()
-    accept_thres, fpr_, thres_ = plot_ROC(train_label_vector, train_score_vector)
+    accept_thres, fpr_, thres_ = find_best_threshold(
+            train_label_vector, train_score_vector)
 
     if config["thresh_type"] == "normal":
         config['accept_thres'] = accept_thres
@@ -70,5 +79,3 @@ def set_threshold(config, embeds, val_trial_pth):
     elif config["thresh_type"] == "extreme":
         config['accept_thres'] = thres_[np.where(fpr_ > 0.2)[0][0]]
         config['enroll_thres'] = thres_[np.where(fpr_ < 0.01)[0][-1]]
-
-
