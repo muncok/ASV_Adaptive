@@ -22,6 +22,12 @@ parser.add_argument('-out_dir',
                     required=True
                     )
 
+parser.add_argument('-trial_in',
+                    type=str,
+                    help='trial directory',
+                    required=True
+                    )
+
 parser.add_argument('-n_process',
                     type=int,
                     help='number of processes',
@@ -86,15 +92,14 @@ if __name__=='__main__':
     key2id = {k:v for v, k in enumerate(keys)}
 
     # trial for finding best threshold
-    trial_base = "trials/enr306_uttr1/"
-    set_threshold(config, embeds, trial_base+'trial_for_thresh.pkl')
+    trial_base = args.trial_in
+    set_threshold(config, embeds, trial_base+'/trial_for_thresh.pkl')
     print('Accept Thres: {:.5f}, Enroll Thres: {:.5f}'.format(
         config['accept_thres'], config['enroll_thres']))
 
 # ===================== Run trials =====================
     n_parallel = args.n_process
-    #for p_ratio in [0.01, 0.1, 0.5, 0.9]:
-    for p_ratio in [0.9]:
+    for p_ratio in [0.01, 0.1, 0.5, 0.9]:
         print("="*100)
         print("p_ratio: {}".format(p_ratio))
         trial_set = pickle.load(open(trial_base+"trials_ratio_{}.pkl".format(str(p_ratio)), "rb"))
