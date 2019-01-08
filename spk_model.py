@@ -4,12 +4,14 @@ from utils import cos_dist_sim
 class spk_model():
     def __init__(self, config, name, enr_keys, enroll_utters):
         self.name = name
-        self.accept_thres = config['accept_thres']
-        self.enroll_thres = config['enroll_thres']
         self.sim = config['sim']
         self.sv_mode = config['sv_mode']
+        self.accept_thres = config['accept_thres']
         self.accept_thres_update = config['accept_thres_update']
+        self.enroll_thres = config['enroll_thres']
         self.enroll_thres_update = config['enroll_thres_update']
+        self.neg_thres = config['neg_thres']
+        self.neg_thres_update = config['neg_thres_update']
         self.n_use_enroll = config['n_use_enroll']
         self.include_init = config['include_init']
 
@@ -35,6 +37,7 @@ class spk_model():
         self.embed_key.append(key)
         self.utters.append(in_utter)
         self.confidences.append(cfid)
+        self.confidences_scale.append(1.0)
         self.n_total_enroll += 1
         self.cfids.append(cfid)
 
@@ -99,4 +102,5 @@ class spk_model():
             if i == self.n_init_enrolls:
                 print("==================================")
             print("{}: {:.3f} {:.3f}".format(key, cfid, cfid_scale))
+        print()
 

@@ -79,3 +79,49 @@ def set_threshold(config, embeds, val_trial_pth):
     elif config["thresh_type"] == "extreme":
         config['accept_thres'] = thres_[np.where(fpr_ > 0.2)[0][0]]
         config['enroll_thres'] = thres_[np.where(fpr_ < 0.01)[0][-1]]
+
+def sort_trials(config, key2id, trial):
+    enr_spks, enr_uttr_keys, pos_trial_keys, neg_trial_keys = trial
+    n_trials = len(pos_trial_keys) + len(neg_trial_keys)
+    enr_ids = np.array([key2id[k] for k in enr_uttr_keys])
+    if config['trial_type'] == 'random':
+        permu_idx = np.random.permutation(range(n_trials))
+        trial_ids = np.array([key2id[k]
+            for k in pos_trial_keys + neg_trial_keys])[permu_idx]
+        label = np.array([1]*len(pos_trial_keys) + [0]*len(neg_trial_keys))
+        label = label[permu_idx]
+    elif config['trial_type'] == 'sortedPos':
+        sessions = list(map(lambda x: x[8:19], pos_trial_keys))
+        df = pd.DataFrame.from_dict(dict( utters = pos_trial_keys,
+            session = sessions ))
+        unique_session = np.unique(sorted(df.session.values))
+        session_cnt = df.session.value_counts()
+
+        n_unique_sess = len(unique_session)
+        n_sess_trials = len(neg_trial_keys)+n_unique_sess
+
+        pos_sess_idx_ = sorted(np.random.choice(range(n_sess_trials),
+            size=n_unique_sess, replace=False))
+
+        pos_seat_idx_ = []
+        for i, sess in enumerate(unique_session):
+            l = session_cnt[sess]
+            pos_sess_idx_[i+1:] += l-1
+            for j in range(l):
+                pos_seat_idx_.append(j+pos_sess_idx_[i])
+
+        neg_seat_idx_ = list(set(range(n_trials)) - set(pos_seat_idx_))
+
+        pos_trial_id = [key2id[k] for k in sorted(pos_trial_keys)]
+        neg_trial_id = [key2id[k] for k in neg_trial_keys]
+        trial_ids = np.zeros(n_trials)
+        trial_ids[pos_seat_idx_] = pos_trial_id
+        trial_ids[neg_seat_idx_] = neg_trial_id
+        trial_ids = trial_ids.astype(np.int64)
+
+        label = np.zeros(n_trials)
+        label[pos_seat_idx_] = [1]*len(pos_trial_keys)
+        label[neg_seat_idx_] = [0]*len(neg_trial_keys)
+
+    return enr_spks, enr_ids, trial_ids, label
+
