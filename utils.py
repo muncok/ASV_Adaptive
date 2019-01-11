@@ -84,13 +84,16 @@ def sort_trials(config, key2id, trial):
     enr_spks, enr_uttr_keys, pos_trial_keys, neg_trial_keys = trial
     n_trials = len(pos_trial_keys) + len(neg_trial_keys)
     enr_ids = np.array([key2id[k] for k in enr_uttr_keys])
-    if config['trial_type'] == 'random':
+    trial_idxs = np.array([key2id[k]
+        for k in pos_trial_keys + neg_trial_keys])
+    label = np.array([1]*len(pos_trial_keys) + [0]*len(neg_trial_keys))
+
+    # sorting trials
+    if config['trial_sort'] == 'random':
         permu_idx = np.random.permutation(range(n_trials))
-        trial_ids = np.array([key2id[k]
-            for k in pos_trial_keys + neg_trial_keys])[permu_idx]
-        label = np.array([1]*len(pos_trial_keys) + [0]*len(neg_trial_keys))
+        trial_idxs = trial_idxs[permu_idx]
         label = label[permu_idx]
-    elif config['trial_type'] == 'sortedPos':
+    elif config['trial_sort'] == 'sortedPos':
         sessions = list(map(lambda x: x[8:19], pos_trial_keys))
         df = pd.DataFrame.from_dict(dict( utters = pos_trial_keys,
             session = sessions ))
@@ -114,14 +117,17 @@ def sort_trials(config, key2id, trial):
 
         pos_trial_id = [key2id[k] for k in sorted(pos_trial_keys)]
         neg_trial_id = [key2id[k] for k in neg_trial_keys]
-        trial_ids = np.zeros(n_trials)
-        trial_ids[pos_seat_idx_] = pos_trial_id
-        trial_ids[neg_seat_idx_] = neg_trial_id
-        trial_ids = trial_ids.astype(np.int64)
+        trial_idxs = np.zeros(n_trials)
+        trial_idxs[pos_seat_idx_] = pos_trial_id
+        trial_idxs[neg_seat_idx_] = neg_trial_id
+        trial_idxs = trial_idxs.astype(np.int64)
 
         label = np.zeros(n_trials)
         label[pos_seat_idx_] = [1]*len(pos_trial_keys)
         label[neg_seat_idx_] = [0]*len(neg_trial_keys)
 
-    return enr_spks, enr_ids, trial_ids, label
+    return enr_spks, enr_ids, trial_idxs, label
+
+def interpret_trace(trace_record):
+    pass
 
