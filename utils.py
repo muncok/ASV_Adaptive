@@ -80,53 +80,27 @@ def set_threshold(config, embeds, val_trial_pth):
         config['accept_thres'] = thres_[np.where(fpr_ > 0.2)[0][0]]
         config['enroll_thres'] = thres_[np.where(fpr_ < 0.01)[0][-1]]
 
-def sort_trials(config, key2id, trial):
-    enr_spks, enr_uttr_keys, pos_trial_keys, neg_trial_keys = trial
-    n_trials = len(pos_trial_keys) + len(neg_trial_keys)
-    enr_ids = np.array([key2id[k] for k in enr_uttr_keys])
-    trial_idxs = np.array([key2id[k]
-        for k in pos_trial_keys + neg_trial_keys])
-    label = np.array([1]*len(pos_trial_keys) + [0]*len(neg_trial_keys))
+def key2idx(ref_keys, in_keys):
+    key2idx = {v:k for k, v in  enumerate(ref_keys)}
+    idxs = np.array([key2idx[k] for k in in_keys])
+
+    return idxs
+
+def read_trials(config, keys, trial):
+    enr_spks, enr_uttr_keys, adapt_trial, test_trial, ood_trial = trial
+    enr_idxs = key2idx(keys, enr_uttr_keys)
+    adapt_trial = (key2idx(keys, adapt_trial[0]), adapt_trial[1])
+    test_trial = (key2idx(keys, test_trial[0]), test_trial[1])
+    ood_trial = (key2idx(keys, ood_trial[0]), ood_trial[1])
 
     # sorting trials
-    if config['trial_sort'] == 'random':
-        permu_idx = np.random.permutation(range(n_trials))
-        trial_idxs = trial_idxs[permu_idx]
-        label = label[permu_idx]
-    elif config['trial_sort'] == 'sortedPos':
-        sessions = list(map(lambda x: x[8:19], pos_trial_keys))
-        df = pd.DataFrame.from_dict(dict( utters = pos_trial_keys,
-            session = sessions ))
-        unique_session = np.unique(sorted(df.session.values))
-        session_cnt = df.session.value_counts()
+    # n_trials = len(adapt_label)
+    # if config['trial_sort'] == 'random':
+        # permu_idx = np.random.permutation(range(n_trials))
+        # trial_idxs = trial_idxs[permu_idx]
+        # label = label[permu_idx]
 
-        n_unique_sess = len(unique_session)
-        n_sess_trials = len(neg_trial_keys)+n_unique_sess
-
-        pos_sess_idx_ = sorted(np.random.choice(range(n_sess_trials),
-            size=n_unique_sess, replace=False))
-
-        pos_seat_idx_ = []
-        for i, sess in enumerate(unique_session):
-            l = session_cnt[sess]
-            pos_sess_idx_[i+1:] += l-1
-            for j in range(l):
-                pos_seat_idx_.append(j+pos_sess_idx_[i])
-
-        neg_seat_idx_ = list(set(range(n_trials)) - set(pos_seat_idx_))
-
-        pos_trial_id = [key2id[k] for k in sorted(pos_trial_keys)]
-        neg_trial_id = [key2id[k] for k in neg_trial_keys]
-        trial_idxs = np.zeros(n_trials)
-        trial_idxs[pos_seat_idx_] = pos_trial_id
-        trial_idxs[neg_seat_idx_] = neg_trial_id
-        trial_idxs = trial_idxs.astype(np.int64)
-
-        label = np.zeros(n_trials)
-        label[pos_seat_idx_] = [1]*len(pos_trial_keys)
-        label[neg_seat_idx_] = [0]*len(neg_trial_keys)
-
-    return enr_spks, enr_ids, trial_idxs, label
+    return enr_spks, enr_idxs, adapt_trial, test_trial, ood_trial
 
 def interpret_trace(trace_record):
     pass

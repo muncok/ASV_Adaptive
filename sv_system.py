@@ -8,11 +8,6 @@ class sv_system():
         self.sv_mode = config['sv_mode']
         self.config = config
 
-        self.log_trial_keys = []
-        self.log_trial_cfid = []
-        self.log_trial_res  = []
-        self.log_trial_mod  = []
-
         self.n_benefits = 0
         self.n_fps = 0
         self.fps_scores = []
@@ -25,7 +20,20 @@ class sv_system():
 
         return cfids
 
-    def verify_and_enroll(self, key, in_utter):
+    def verify(self, in_utter):
+        verify_result = 0
+        cfids = self._get_cfids(in_utter)
+        max_cfid, max_idx = np.max(cfids), np.argmax(cfids)
+        selected_model = self.spk_models[max_idx]
+        accept_thres = selected_model.accept_thres
+
+        if (max_cfid > accept_thres)\
+                 and (max_idx < len(self.enrolled_spks)):
+            verify_result = 1
+
+        return verify_result, max_cfid
+
+    def verify_adapt(self, key, in_utter):
         verify_result = 0
         enroll_result = -1
         cfids = self._get_cfids(in_utter)
@@ -34,16 +42,16 @@ class sv_system():
         accept_thres = selected_model.accept_thres
         enroll_thres = selected_model.enroll_thres
 
-        if (max_cfid > accept_thres):
+        if (max_cfid > accept_thres)\
+                 and (max_idx < len(self.enrolled_spks)):
             verify_result = 1
 
-        if (max_cfid > enroll_thres) \
-                and (self.sv_mode != 'base'):
+        if (max_cfid > enroll_thres):
             enroll_result = selected_model.enroll(key, in_utter, max_cfid)
 
-        return verify_result, enroll_result, max_cfid,
+        return verify_result, enroll_result, max_cfid
 
-    def verify_and_enroll_neg(self, key, in_utter):
+    def verify_adapt_neg(self, key, in_utter):
         verify_result = 0
         enroll_result = -1
         cfids = self._get_cfids(in_utter)
@@ -54,32 +62,25 @@ class sv_system():
         neg_thres = selected_model.neg_thres
         spk_name = key[:7]
 
-        # supervisely enroll imposters
-        # if spk_name not in self.enrolled_spks:
-                # self.spk_models.append(
-                        # spk_model(self.config,
-                            # spk_name, [key], [in_utter]))
-                # self.enrolled_spks.append(spk_name)
-
         # negative enrollment's benefits for reducing fpr
-        if len(self.spk_models) > 2:
-            if (max_idx != 0)\
-                    and (cfids[0] > accept_thres \
-                    and spk_name != self.spk_models[0].name):
-                self.n_benefits += 1
+        # if len(self.spk_models) > 2:
+            # if (max_idx != 0)\
+                    # and (cfids[0] > accept_thres \
+                    # and spk_name != self.spk_models[0].name):
+                # self.n_benefits += 1
 
-            if (cfids[0] > accept_thres \
-                    and spk_name != self.spk_models[0].name):
-                self.n_fps += 1
-                self.fps_scores.append(cfids[0])
+            # if (cfids[0] > accept_thres \
+                    # and spk_name != self.spk_models[0].name):
+                # self.n_fps += 1
+                # self.fps_scores.append(cfids[0])
 
         # verify
-        if (max_cfid > accept_thres) and (max_idx < 1):
+        if (max_cfid > accept_thres) \
+                and (max_idx < len(self.enrolled_spks)):
             # accepted!
             verify_result = 1
             # adaptive enrollment
-            if (max_cfid > enroll_thres)\
-                and (self.sv_mode != 'base'):
+            if (max_cfid > enroll_thres):
                 enroll_result = selected_model.enroll(
                         key, in_utter, max_cfid)
                 # selected_model.show_enrolls()
