@@ -89,6 +89,9 @@ def key2idx(ref_keys, in_keys):
 def read_trials(config, keys, trial):
     enr_spks, enr_uttr_keys, adapt_trial, test_trial, ood_trial = trial
     enr_idxs = key2idx(keys, enr_uttr_keys)
+    # use only n_enr enrollments
+    enr_idxs = enr_idxs[:config['n_enrs']]
+    # (key, label) --> (idx, label)
     adapt_trial = (key2idx(keys, adapt_trial[0]), adapt_trial[1])
     test_trial = (key2idx(keys, test_trial[0]), test_trial[1])
     ood_trial = (key2idx(keys, ood_trial[0]), ood_trial[1])

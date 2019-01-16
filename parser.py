@@ -3,9 +3,13 @@ import argparse
 def get_args():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('-n_enr', type=str,
-                        help='number of enrollments',
+    parser.add_argument('-q_size', type=int,
+                        help='queue size of enrollments',
                         default='7')
+
+    parser.add_argument('-n_enrs', type=int,
+                        help='number of enrollments',
+                        default='1')
 
     parser.add_argument('-out_dir',
                         type=str,
@@ -25,9 +29,8 @@ def get_args():
                         default=40)
 
     parser.add_argument('-sv_mode',
-                        type=str,
+                        nargs='+',
                         help='type of sv_system',
-                        choices=['base', 'inc', 'inc_neg', 'inc_update'],
                         required=True
                         )
 
@@ -37,13 +40,5 @@ def get_args():
                         choices=['random', 'sortedPos'],
                         default='no_sort'
                         )
-
-    parser.add_argument('-ths_update',
-                        help='use of thresh update',
-                        action='store_true')
-
-    parser.add_argument('-incl_init',
-                        help='include the init enrollment',
-                        action='store_true')
 
     return parser.parse_args()

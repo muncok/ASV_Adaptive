@@ -27,11 +27,11 @@ class sv_system():
         selected_model = self.spk_models[max_idx]
         accept_thres = selected_model.accept_thres
 
-        if (max_cfid > accept_thres)\
-                 and (max_idx < len(self.enrolled_spks)):
+        if (max_cfid > accept_thres) and \
+                (max_idx < len(self.enrolled_spks)):
             verify_result = 1
 
-        return verify_result, max_cfid
+        return verify_result, max_cfid, cfids
 
     def verify_adapt(self, key, in_utter):
         verify_result = 0
@@ -42,8 +42,8 @@ class sv_system():
         accept_thres = selected_model.accept_thres
         enroll_thres = selected_model.enroll_thres
 
-        if (max_cfid > accept_thres)\
-                 and (max_idx < len(self.enrolled_spks)):
+        if (max_cfid > accept_thres) and \
+                (max_idx < len(self.enrolled_spks)):
             verify_result = 1
 
         if (max_cfid > enroll_thres):
@@ -75,8 +75,8 @@ class sv_system():
                 # self.fps_scores.append(cfids[0])
 
         # verify
-        if (max_cfid > accept_thres) \
-                and (max_idx < len(self.enrolled_spks)):
+        if (max_cfid > accept_thres) and \
+                (max_idx < len(self.enrolled_spks)):
             # accepted!
             verify_result = 1
             # adaptive enrollment

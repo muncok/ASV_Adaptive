@@ -6,13 +6,14 @@ class spk_model():
         self.name = name
         self.sim = config['sim']
         self.sv_mode = config['sv_mode']
+        self.queue_size = config['queue_size']
+
         self.accept_thres = config['accept_thres']
         self.accept_thres_update = config['accept_thres_update']
         self.enroll_thres = config['enroll_thres']
         self.enroll_thres_update = config['enroll_thres_update']
         self.neg_thres = config['neg_thres']
         self.neg_thres_update = config['neg_thres_update']
-        self.n_use_enroll = config['n_use_enroll']
         self.include_init = config['include_init']
 
         self.n_init_enrolls = len(enroll_utters)
@@ -26,7 +27,6 @@ class spk_model():
         self.embed_mean = self._compute_embed_mean()
         self.config = config
         self.cfids = []
-
 
     def _compute_embed_mean(self):
         mean_ = np.mean(self.utters, axis=0)
@@ -59,11 +59,9 @@ class spk_model():
             lamb = be*(1-mean_cos)
             self.accept_thres = self.accept_thres*(1-lamb) + T_new*lamb
 
-
         if self.config['enroll_thres_update']:
             change = (1-1e-4) - mean_cos
             self.enroll_thres = (self.enroll_thres*(1 - al) + al * cfid ) * (1 + be * change)
-
         # this value should be not used (it is not allowed supervison)
         if key[:7] == self.name:
             return 1
@@ -83,12 +81,12 @@ class spk_model():
                 utters_ = np.array(self.utters)
             else:
                 n_total = len(self.utters)
-                if self.n_use_enroll == 'full':
+                if self.queue_size == 'full':
                     idx = list(range(n_total))
                 elif self.include_init:
-                    idx = [0]+list(range(max(0, n_total-int(self.n_use_enroll))+1, n_total))
+                    idx = [0]+list(range(max(0, n_total-int(self.queue_size))+1, n_total))
                 else:
-                    idx = list(range(max(0, n_total-int(self.n_use_enroll)), n_total))
+                    idx = list(range(max(0, n_total-int(self.queue_size)), n_total))
                 utters_ = np.array(self.utters)[idx]
             cfid = cos_dist_sim(utters_, in_utter_, dim=1).mean()
         elif self.sim == 'euc':
